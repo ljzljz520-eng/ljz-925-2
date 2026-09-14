@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作品预览 · 限时查看</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", Georgia, serif;
+    background: #0a0a0c;
+    color: #e8e6e1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  /* 背景氛围光 */
+  .glow {
+    position: fixed; border-radius: 50%; filter: blur(120px); opacity: .25; pointer-events: none;
+  }
+  .glow.g1 { width: 500px; height: 500px; background: #3a4a7a; top: -150px; left: -100px; }
+  .glow.g2 { width: 400px; height: 400px; background: #7a5a3a; bottom: -120px; right: -80px; }
+
+  .card {
+    position: relative; z-index: 1;
+    width: min(420px, 90vw);
+    padding: 56px 44px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    text-align: center;
+    animation: rise .8s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+  .brand { font-size: 13px; letter-spacing: .5em; color: #9a917f; text-transform: uppercase; margin-bottom: 18px; }
+  h1 { font-size: 30px; font-weight: 500; letter-spacing: .12em; margin-bottom: 10px; }
+  .sub { font-size: 13px; color: #8a8578; margin-bottom: 38px; line-height: 1.8; }
+
+  input {
+    width: 100%; padding: 15px 18px;
+    background: rgba(0,0,0,.4);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 10px;
+    color: #fff; font-size: 17px; letter-spacing: .18em;
+    text-align: center; text-transform: uppercase;
+    outline: none; transition: border-color .25s, box-shadow .25s;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  input:focus { border-color: #c8a96a; box-shadow: 0 0 0 3px rgba(200,169,106,.15); }
+  input::placeholder { color: #55504a; letter-spacing: .1em; font-size: 14px; }
+
+  button {
+    width: 100%; margin-top: 16px; padding: 15px;
+    background: linear-gradient(135deg, #c8a96a, #a8873f);
+    border: none; border-radius: 10px;
+    color: #14100a; font-size: 15px; font-weight: 600; letter-spacing: .3em;
+    cursor: pointer; transition: transform .15s, box-shadow .25s, opacity .2s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(200,169,106,.25); }
+  button:disabled { opacity: .5; cursor: wait; transform: none; }
+
+  .err {
+    margin-top: 16px; font-size: 13px; color: #e07a6a; min-height: 20px;
+    animation: shake .3s;
+  }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  .tips { margin-top: 34px; font-size: 12px; color: #5a5548; line-height: 2; }
+  .divider { margin: 26px auto 0; width: 40px; height: 1px; background: rgba(255,255,255,.12); }
+</style>
+</head>
+<body>
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="card">
+    <div class="brand">Gallery</div>
+    <h1>作品预览</h1>
+    <p class="sub">本影集为限时邀约预览<br>请输入您的专属卡密</p>
+    <form id="form" autocomplete="off">
+      <input id="key" maxlength="14" placeholder="XXXX-XXXX-XXXX" autofocus>
+      <button id="btn" type="submit">进 入 影 集</button>
+    </form>
+    <div class="err" id="err"></div>
+    <div class="divider"></div>
+    <p class="tips">卡密具有有效期与使用次数限制<br>预览过程中请勿传播页面内容</p>
+  </div>
+
+<script>
+const form = document.getElementById('form');
+const input = document.getElementById('key');
+const err = document.getElementById('err');
+const btn = document.getElementById('btn');
+
+// 自动格式化 XXXX-XXXX-XXXX
+input.addEventListener('input', () => {
+  const raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+  input.value = raw.match(/.{1,4}/g)?.join('-') || '';
+  err.textContent = '';
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const key = input.value.trim();
+  if (key.length < 14) { err.textContent = '请输入完整的 12 位卡密'; return; }
+  btn.disabled = true; btn.textContent = '验 证 中 …';
+  try {
+    const r = await fetch('/api/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    const data = await r.json();
+    if (!r.ok) { err.textContent = data.error || '验证失败'; return; }
+    sessionStorage.setItem('pv_token', data.token);
+    sessionStorage.setItem('pv_key', data.key);
+    location.href = '/gallery';
+  } catch {
+    err.textContent = '网络异常，请重试';
+  } finally {
+    btn.disabled = false; btn.textContent = '进 入 影 集';
+  }
+});
+</script>
+</body>
+</html>

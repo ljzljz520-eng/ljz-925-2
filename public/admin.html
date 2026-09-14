@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 · 作品预览系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #0f1114; color: #dde1e6; min-height: 100vh; }
+  button { cursor: pointer; font-family: inherit; }
+  input, select { font-family: inherit; }
+
+  /* ---------- 登录 ---------- */
+  #login-view { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card {
+    width: min(380px, 90vw); padding: 48px 40px; text-align: center;
+    background: #171a1f; border: 1px solid #262b33; border-radius: 16px;
+  }
+  .login-card h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .login-card p { font-size: 13px; color: #7d8590; margin-bottom: 30px; }
+  .login-card input {
+    width: 100%; padding: 13px 16px; background: #0d0f12; border: 1px solid #2c333c;
+    border-radius: 8px; color: #fff; font-size: 15px; outline: none; margin-bottom: 14px;
+  }
+  .login-card input:focus { border-color: #4d7cfe; }
+  .btn {
+    padding: 11px 22px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+    background: #4d7cfe; color: #fff; transition: background .2s, opacity .2s;
+  }
+  .btn:hover { background: #3b6aee; }
+  .btn:disabled { opacity: .5; }
+  .btn.block { width: 100%; }
+  .btn.sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+  .btn.ghost { background: transparent; border: 1px solid #2c333c; color: #aab2bd; }
+  .btn.ghost:hover { border-color: #4d7cfe; color: #fff; background: transparent; }
+  .btn.danger { background: #b13a3a; } .btn.danger:hover { background: #c94848; }
+  .btn.warn { background: #8a6d1f; } .btn.warn:hover { background: #a5842a; }
+  .btn.green { background: #2f7d4f; } .btn.green:hover { background: #3a9561; }
+  .login-err { color: #e06c5a; font-size: 13px; min-height: 18px; margin-top: 10px; }
+
+  /* ---------- 主面板 ---------- */
+  #panel { display: none; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 60px; background: #171a1f; border-bottom: 1px solid #262b33;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .topbar .title { font-size: 15px; font-weight: 600; letter-spacing: .05em; }
+  .topbar .title span { color: #4d7cfe; }
+  .tabs { display: flex; gap: 4px; }
+  .tabs button {
+    background: none; border: none; color: #8b949e; font-size: 14px; padding: 8px 16px;
+    border-radius: 8px; transition: all .2s;
+  }
+  .tabs button:hover { color: #fff; }
+  .tabs button.on { background: #23282f; color: #fff; }
+  .wrap { padding: 28px; margin: 0 auto; max-width: 1280px; }
+  .view { display: none; } .view.on { display: block; }
+
+  /* 统计卡片 */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat {
+    background: #171a1f; border: 1px solid #262b33; border-radius: 12px; padding: 20px 22px;
+  }
+  .stat .n { font-size: 30px; font-weight: 700; margin-bottom: 4px; }
+  .stat .l { font-size: 12px; color: #7d8590; }
+  .stat.blue .n { color: #6b9bff; } .stat.green .n { color: #4ecb7d; }
+  .stat.red .n { color: #e06c5a; } .stat.amber .n { color: #e0b45a; }
+  .stat.purple .n { color: #b48ae0; }
+
+  .panel-box { background: #171a1f; border: 1px solid #262b33; border-radius: 12px; padding: 22px; margin-bottom: 24px; }
+  .panel-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #c9d1d9; }
+
+  /* 趋势图 */
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding-top: 10px; }
+  .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+  .bar .v { font-size: 10px; color: #7d8590; }
+  .bar .b { width: 100%; max-width: 34px; background: linear-gradient(180deg, #4d7cfe, #2c4a9e); border-radius: 4px 4px 0 0; min-height: 2px; transition: height .4s; }
+  .bar .d { font-size: 10px; color: #565f6a; }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; color: #7d8590; font-weight: 500; font-size: 12px; border-bottom: 1px solid #262b33; white-space: nowrap; }
+  td { padding: 11px 12px; border-bottom: 1px solid #1e232a; vertical-align: middle; }
+  tr:hover td { background: #1a1e24; }
+  .mono { font-family: "SF Mono", Consolas, monospace; font-size: 12.5px; letter-spacing: .03em; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+  .tag.active { background: #14301f; color: #4ecb7d; }
+  .tag.banned { background: #33181a; color: #e06c5a; }
+  .tag.expired { background: #2e2617; color: #e0b45a; }
+  .tag.exhausted { background: #252a33; color: #8b949e; }
+  .row-actions { display: flex; gap: 6px; }
+
+  /* 表单 */
+  .form-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: #7d8590; }
+  .field input, .field select {
+    padding: 9px 12px; background: #0d0f12; border: 1px solid #2c333c; border-radius: 8px;
+    color: #fff; font-size: 13px; outline: none; min-width: 140px;
+  }
+  .field input:focus { border-color: #4d7cfe; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+  .toolbar .left { display: flex; gap: 10px; align-items: center; }
+  .muted { color: #565f6a; font-size: 12px; }
+  .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; font-size: 13px; color: #8b949e; }
+
+  .export-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .export-card { background: #171a1f; border: 1px solid #262b33; border-radius: 12px; padding: 26px; }
+  .export-card h4 { font-size: 15px; margin-bottom: 8px; }
+  .export-card p { font-size: 12.5px; color: #7d8590; margin-bottom: 18px; line-height: 1.7; }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #23282f; border: 1px solid #3a424d; color: #fff; padding: 12px 24px;
+    border-radius: 10px; font-size: 13.5px; opacity: 0; transition: all .3s; z-index: 99; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 生成结果弹层 */
+  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 50; }
+  .modal-mask.open { display: flex; }
+  .modal { width: min(560px, 92vw); max-height: 76vh; overflow: auto; background: #171a1f; border: 1px solid #2c333c; border-radius: 14px; padding: 26px; }
+  .modal h3 { margin-bottom: 14px; font-size: 15px; }
+  .key-list { background: #0d0f12; border: 1px solid #262b33; border-radius: 8px; padding: 14px; font-family: Consolas, monospace; font-size: 13px; line-height: 1.9; word-break: break-all; user-select: all; max-height: 300px; overflow: auto; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="login-view">
+  <div class="login-card">
+    <h1>📷 作品预览系统</h1>
+    <p>管理后台 · 请验证管理员密码</p>
+    <input type="password" id="pwd" placeholder="管理员密码" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn block" onclick="doLogin()">登 录</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- 主面板 -->
+<div id="panel">
+  <div class="topbar">
+    <div class="title">📷 作品预览 <span>管理后台</span></div>
+    <div class="tabs">
+      <button data-v="overview" class="on" onclick="switchTab('overview')">概览</button>
+      <button data-v="keys" onclick="switchTab('keys')">卡密管理</button>
+      <button data-v="logs" onclick="switchTab('logs')">访问日志</button>
+      <button data-v="export" onclick="switchTab('export')">数据导出</button>
+    </div>
+    <button class="btn ghost sm" onclick="logout()">退出登录</button>
+  </div>
+
+  <div class="wrap">
+    <!-- 概览 -->
+    <div class="view on" id="v-overview">
+      <div class="cards" id="stat-cards"></div>
+      <div class="panel-box">
+        <h3>近 14 天卡密兑换趋势</h3>
+        <div class="chart" id="trend"></div>
+      </div>
+      <div class="panel-box">
+        <h3>使用次数 TOP 5 卡密</h3>
+        <table id="top-keys"><thead><tr><th>卡密</th><th>备注</th><th>已用 / 上限</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <!-- 卡密管理 -->
+    <div class="view" id="v-keys">
+      <div class="panel-box">
+        <h3>批量生成卡密</h3>
+        <div class="form-row">
+          <div class="field"><label>数量</label><input type="number" id="g-count" value="10" min="1" max="500"></div>
+          <div class="field"><label>每张可使用次数 (0 = 不限)</label><input type="number" id="g-uses" value="1" min="0"></div>
+          <div class="field"><label>有效期至 (留空 = 永久)</label><input type="datetime-local" id="g-exp"></div>
+          <div class="field" style="flex:1;min-width:180px"><label>备注</label><input type="text" id="g-note" placeholder="如: 客户张先生 / 婚礼跟拍"></div>
+          <button class="btn" onclick="generate()">＋ 生成</button>
+        </div>
+      </div>
+      <div class="panel-box">
+        <div class="toolbar">
+          <div class="left"><h3 style="margin:0">卡密列表</h3><span class="muted" id="keys-count"></span></div>
+          <button class="btn ghost sm" onclick="loadKeys()">⟳ 刷新</button>
+        </div>
+        <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>ID</th><th>卡密</th><th>备注</th><th>已用/上限</th><th>有效期至</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+          <tbody id="keys-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="view" id="v-logs">
+      <div class="panel-box">
+        <div class="toolbar">
+          <div class="left">
+            <h3 style="margin:0">访问日志</h3>
+            <select id="log-filter" onchange="loadLogs(1)" style="padding:7px 10px;background:#0d0f12;border:1px solid #2c333c;border-radius:8px;color:#fff;font-size:13px">
+              <option value="">全部动作</option>
+              <option value="redeem">兑换成功</option>
+              <option value="redeem_fail">兑换失败</option>
+              <option value="heartbeat_kick">浏览中被踢出</option>
+              <option value="generate">生成卡密</option>
+              <option value="ban">封禁</option>
+              <option value="unban">解封</option>
+              <option value="delete">删除</option>
+              <option value="admin_login">管理员登录</option>
+            </select>
+          </div>
+          <button class="btn ghost sm" onclick="loadLogs(logPage)">⟳ 刷新</button>
+        </div>
+        <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>ID</th><th>时间</th><th>动作</th><th>卡密</th><th>详情</th><th>IP</th></tr></thead>
+          <tbody id="logs-tbody"></tbody>
+        </table>
+        </div>
+        <div class="pager">
+          <button class="btn ghost sm" onclick="loadLogs(logPage-1)">‹ 上一页</button>
+          <span id="log-page-info"></span>
+          <button class="btn ghost sm" onclick="loadLogs(logPage+1)">下一页 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 导出 -->
+    <div class="view" id="v-export">
+      <div class="export-grid">
+        <div class="export-card">
+          <h4>📇 导出卡密清单</h4>
+          <p>导出全部卡密的卡号、备注、使用次数、有效期、状态与创建时间，CSV 格式(Excel 可直接打开)。</p>
+          <button class="btn" onclick="download('/admin/api/export/keys')">下载 keys.csv</button>
+        </div>
+        <div class="export-card">
+          <h4>🧾 导出访问日志</h4>
+          <p>导出最近 5000 条访问日志，包含时间、动作、卡密、详情与 IP，CSV 格式。</p>
+          <button class="btn" onclick="download('/admin/api/export/logs')">下载 logs.csv</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 生成结果弹窗 -->
+<div class="modal-mask" id="gen-modal">
+  <div class="modal">
+    <h3>✅ 已生成 <span id="gen-count"></span> 张卡密</h3>
+    <div class="key-list" id="gen-list"></div>
+    <div class="foot">
+      <button class="btn ghost" onclick="copyKeys()">复制全部</button>
+      <button class="btn" onclick="document.getElementById('gen-modal').classList.remove('open')">完成</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 基础 ================= */
+let token = localStorage.getItem('pv_admin') || '';
+const $ = (id) => document.getElementById(id);
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token, ...(opts.headers || {}) },
+  });
+  if (r.status === 401) { logout(); throw new Error('未登录'); }
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || '请求失败');
+  return d;
+}
+
+async function doLogin() {
+  const pwd = $('pwd').value;
+  const r = await fetch('/admin/api/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pwd }),
+  });
+  const d = await r.json();
+  if (!r.ok) { $('login-err').textContent = d.error || '登录失败'; return; }
+  token = d.token;
+  localStorage.setItem('pv_admin', token);
+  enter();
+}
+
+function logout() {
+  localStorage.removeItem('pv_admin');
+  token = '';
+  $('panel').style.display = 'none';
+  $('login-view').style.display = 'flex';
+}
+
+function enter() {
+  $('login-view').style.display = 'none';
+  $('panel').style.display = 'block';
+  loadStats(); loadKeys(); loadLogs(1);
+}
+
+function switchTab(v) {
+  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+  document.querySelectorAll('.view').forEach((el) => el.classList.remove('on'));
+  $('v-' + v).classList.add('on');
+  if (v === 'overview') loadStats();
+  if (v === 'keys') loadKeys();
+  if (v === 'logs') loadLogs(logPage);
+}
+
+const fmtT = (s) => s ? new Date(s).toLocaleString('zh-CN', { hour12: false }) : '—';
+
+/* ================= 概览 ================= */
+async function loadStats() {
+  const s = await api('/admin/api/stats');
+  $('stat-cards').innerHTML = [
+    ['blue', s.totalKeys, '卡密总数'],
+    ['green', s.activeKeys, '有效卡密'],
+    ['red', s.bannedKeys, '已封禁'],
+    ['amber', s.expiredKeys, '已过期'],
+    ['purple', s.totalRedeems, '累计兑换次数'],
+    ['green', s.onlineSessions, '当前在线浏览'],
+  ].map(([c, n, l]) => `<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  const max = Math.max(...s.trend.map((t) => t.count), 1);
+  $('trend').innerHTML = s.trend.map((t) => `
+    <div class="bar">
+      <div class="v">${t.count || ''}</div>
+      <div class="b" style="height:${(t.count / max) * 100}%"></div>
+      <div class="d">${t.day.slice(5)}</div>
+    </div>`).join('');
+
+  $('top-keys').querySelector('tbody').innerHTML = s.topKeys.length
+    ? s.topKeys.map((k) => `<tr><td class="mono">${k.key}</td><td>${esc(k.note) || '—'}</td><td>${k.used_count} / ${k.max_uses === 0 ? '不限' : k.max_uses}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="muted">暂无数据</td></tr>';
+}
+
+/* ================= 卡密 ================= */
+const STATUS_LABEL = { active: ['active', '有效'], banned: ['banned', '已封禁'], expired: ['expired', '已过期'], exhausted: ['exhausted', '次数用尽'] };
+
+async function loadKeys() {
+  const d = await api('/admin/api/keys');
+  $('keys-count').textContent = `共 ${d.keys.length} 张`;
+  $('keys-tbody').innerHTML = d.keys.map((k) => {
+    const [cls, label] = STATUS_LABEL[k.effective_status];
+    return `<tr>
+      <td>${k.id}</td>
+      <td class="mono">${k.key}</td>
+      <td>${esc(k.note) || '<span class="muted">—</span>'}</td>
+      <td>${k.used_count} / ${k.max_uses === 0 ? '不限' : k.max_uses}</td>
+      <td>${k.expires_at ? fmtT(k.expires_at) : '永久'}</td>
+      <td><span class="tag ${cls}">${label}</span></td>
+      <td class="muted">${fmtT(k.created_at)}</td>
+      <td><div class="row-actions">
+        ${k.status === 'banned'
+          ? `<button class="btn green sm" onclick="setBan(${k.id}, false)">解封</button>`
+          : `<button class="btn warn sm" onclick="setBan(${k.id}, true)">封禁</button>`}
+        <button class="btn danger sm" onclick="delKey(${k.id}, '${k.key}')">删除</button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="muted">暂无卡密，请先生成</td></tr>';
+}
+
+async function generate() {
+  const body = {
+    count: +$('g-count').value,
+    max_uses: +$('g-uses').value,
+    expires_at: $('g-exp').value ? new Date($('g-exp').value).toISOString() : null,
+    note: $('g-note').value.trim(),
+  };
+  try {
+    const d = await api('/admin/api/keys/generate', { method: 'POST', body: JSON.stringify(body) });
+    $('gen-count').textContent = d.count;
+    $('gen-list').textContent = d.keys.join('\n');
+    $('gen-modal').classList.add('open');
+    loadKeys(); loadStats();
+  } catch (e) { toast(e.message); }
+}
+
+function copyKeys() {
+  navigator.clipboard.writeText($('gen-list').textContent).then(() => toast('已复制到剪贴板'));
+}
+
+async function setBan(id, ban) {
+  if (ban && !confirm('封禁后，正在浏览的用户将立即被请出。确认封禁？')) return;
+  await api(`/admin/api/keys/${id}/${ban ? 'ban' : 'unban'}`, { method: 'POST' });
+  toast(ban ? '已封禁' : '已解封');
+  loadKeys(); loadStats();
+}
+
+async function delKey(id, key) {
+  if (!confirm(`确认删除卡密 ${key}？该操作不可恢复。`)) return;
+  await api(`/admin/api/keys/${id}`, { method: 'DELETE' });
+  toast('已删除');
+  loadKeys(); loadStats();
+}
+
+/* ================= 日志 ================= */
+let logPage = 1, logTotal = 0;
+const ACTION_LABEL = {
+  redeem: '✅ 兑换成功', redeem_fail: '❌ 兑换失败', heartbeat_kick: '🚪 浏览中被踢出',
+  generate: '🎫 生成卡密', ban: '⛔ 封禁', unban: '🔓 解封', delete: '🗑 删除',
+  admin_login: '🔑 管理员登录', admin_login_fail: '⚠️ 登录失败',
+};
+
+async function loadLogs(page) {
+  page = Math.max(page, 1);
+  const action = $('log-filter').value;
+  const d = await api(`/admin/api/logs?page=${page}&size=50${action ? '&action=' + action : ''}`);
+  logPage = d.page; logTotal = d.total;
+  $('logs-tbody').innerHTML = d.logs.map((l) => `<tr>
+    <td>${l.id}</td>
+    <td class="muted">${fmtT(l.created_at)}</td>
+    <td>${ACTION_LABEL[l.action] || l.action}</td>
+    <td class="mono">${l.key_text || '<span class="muted">—</span>'}</td>
+    <td>${esc(l.detail) || ''}</td>
+    <td class="muted">${esc(l.ip) || ''}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="muted">暂无日志</td></tr>';
+  const pages = Math.max(Math.ceil(logTotal / 50), 1);
+  $('log-page-info').textContent = `第 ${logPage} / ${pages} 页 · 共 ${logTotal} 条`;
+}
+
+/* ================= 导出 ================= */
+async function download(url) {
+  const r = await fetch(url, { headers: { 'X-Admin-Token': token } });
+  if (!r.ok) return toast('导出失败');
+  const blob = await r.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = url.includes('keys') ? 'keys.csv' : 'logs.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('已开始下载');
+}
+
+/* ================= 工具 ================= */
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* 已登录则直接进入 */
+if (token) {
+  api('/admin/api/stats').then(enter).catch(() => logout());
+}
+</script>
+</body>
+</html>

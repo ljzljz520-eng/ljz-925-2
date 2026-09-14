@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8e9eab"/><stop offset="0.6" stop-color="#eef2f3"/><stop offset="1" stop-color="#dfe9f3"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#sky)"/>
+  
+  <circle cx="440" cy="420" r="160" fill="url(#glow)"/>
+  <circle cx="440" cy="420" r="46" fill="#ffffff"/>
+  <path d="M0 660 L200 490 L380 620 L560 516 L800 624 V1000 H0 Z" fill="#8e9eab" opacity="0.85"/>
+  <path d="M0 740 L260 624 L520 728 L800 648 V1000 H0 Z" fill="#8e9eab" opacity="0.6"/>
+  <rect y="820" width="800" height="180" fill="#8e9eab" opacity="0.9"/>
+  <text x="60" y="920" font-family="Georgia, serif" font-size="44" fill="#ffffff" opacity="0.9">雪原孤树</text>
+  <text x="60" y="960" font-family="Georgia, serif" font-size="18" fill="#dfe9f3" opacity="0.7">SERIES No.03 · 2026</text>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3e1f0d"/><stop offset="0.6" stop-color="#c96f2f"/><stop offset="1" stop-color="#f7c873"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffdf8e" stop-opacity="0.9"/><stop offset="1" stop-color="#ffdf8e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#sky)"/>
+  
+  <circle cx="380" cy="300" r="160" fill="url(#glow)"/>
+  <circle cx="380" cy="300" r="46" fill="#ffdf8e"/>
+  <path d="M0 680 L200 505 L380 630 L560 534 L800 616 V1000 H0 Z" fill="#3e1f0d" opacity="0.85"/>
+  <path d="M0 730 L260 636 L520 722 L800 662 V1000 H0 Z" fill="#3e1f0d" opacity="0.6"/>
+  <rect y="820" width="800" height="180" fill="#3e1f0d" opacity="0.9"/>
+  <text x="60" y="920" font-family="Georgia, serif" font-size="44" fill="#ffdf8e" opacity="0.9">沙漠落日</text>
+  <text x="60" y="960" font-family="Georgia, serif" font-size="18" fill="#f7c873" opacity="0.7">SERIES No.04 · 2026</text>
+</svg>

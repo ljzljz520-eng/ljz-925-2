@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b1055"/><stop offset="0.6" stop-color="#7597de"/><stop offset="1" stop-color="#ff9a8b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd3a5" stop-opacity="0.9"/><stop offset="1" stop-color="#ffd3a5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#sky)"/>
+  
+  <circle cx="500" cy="360" r="160" fill="url(#glow)"/>
+  <circle cx="500" cy="360" r="46" fill="#ffd3a5"/>
+  <path d="M0 640 L200 475 L380 610 L560 498 L800 632 V1000 H0 Z" fill="#2b1055" opacity="0.85"/>
+  <path d="M0 750 L260 612 L520 734 L800 634 V1000 H0 Z" fill="#2b1055" opacity="0.6"/>
+  <rect y="820" width="800" height="180" fill="#2b1055" opacity="0.9"/>
+  <text x="60" y="920" font-family="Georgia, serif" font-size="44" fill="#ffd3a5" opacity="0.9">暮色海岸</text>
+  <text x="60" y="960" font-family="Georgia, serif" font-size="18" fill="#ff9a8b" opacity="0.7">SERIES No.02 · 2026</text>
+</svg>

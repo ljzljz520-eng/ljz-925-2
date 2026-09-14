@@ -1,0 +1,15 @@
+{
+  "name": "photo-preview-keys",
+  "version": "1.0.0",
+  "description": "摄影作品限时查看系统(卡密验证 + 管理后台 + SQLite)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "gen-photos": "node gen-photos.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "*",
+    "express": "*"
+  }
+}

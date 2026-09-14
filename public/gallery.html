@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>影集预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", Georgia, serif; background: #0a0a0c; color: #e8e6e1; min-height: 100vh; }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    background: rgba(10,10,12,.85); backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .logo { font-size: 13px; letter-spacing: .4em; color: #c8a96a; }
+  .meta { display: flex; gap: 22px; font-size: 12px; color: #8a8578; }
+  .meta b { color: #d8d4c8; font-weight: 500; }
+  .meta .warn { color: #e0a05a; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 22px; padding: 32px; max-width: 1400px; margin: 0 auto;
+  }
+  .item {
+    position: relative; aspect-ratio: 4/5; border-radius: 12px; overflow: hidden;
+    cursor: zoom-in; background: #16161a;
+    border: 1px solid rgba(255,255,255,.06);
+    transition: transform .3s, box-shadow .3s;
+    animation: fadein .6s ease both;
+  }
+  .item:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+  .item img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
+  .item .cap {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,.75));
+    font-size: 14px; letter-spacing: .1em;
+  }
+  @keyframes fadein { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; } }
+
+  /* 水印层 */
+  #wm {
+    position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden;
+    display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around;
+    transform: rotate(-18deg) scale(1.4); opacity: .07;
+  }
+  #wm span { font-size: 15px; letter-spacing: .2em; color: #fff; padding: 60px 40px; white-space: nowrap; }
+
+  /* 灯箱 */
+  #lb {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    background: rgba(5,5,7,.94); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center; flex-direction: column;
+  }
+  #lb.open { display: flex; }
+  #lb img { max-width: 88vw; max-height: 82vh; border-radius: 8px; box-shadow: 0 24px 80px rgba(0,0,0,.7); }
+  #lb .lb-cap { margin-top: 18px; font-size: 15px; letter-spacing: .2em; color: #c8a96a; }
+  #lb .lb-close { position: absolute; top: 24px; right: 32px; font-size: 30px; color: #8a8578; cursor: pointer; background: none; border: none; }
+  #lb .lb-close:hover { color: #fff; }
+
+  /* 踢出遮罩 */
+  #kick {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    background: rgba(8,8,10,.97);
+    align-items: center; justify-content: center; text-align: center;
+  }
+  #kick.open { display: flex; }
+  #kick .box { animation: rise .5s ease both; }
+  #kick .icon { font-size: 52px; margin-bottom: 20px; }
+  #kick h2 { font-size: 24px; font-weight: 500; letter-spacing: .15em; margin-bottom: 12px; }
+  #kick p { color: #8a8578; font-size: 14px; line-height: 2; }
+  #kick a { color: #c8a96a; text-decoration: none; border-bottom: 1px solid #c8a96a55; }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; } }
+
+  #loading { text-align: center; padding: 120px 0; color: #5a5548; letter-spacing: .3em; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">GALLERY · 限时预览</div>
+  <div class="meta">
+    <span>卡密 <b id="m-key">—</b></span>
+    <span id="m-exp-wrap">有效期 <b id="m-exp">—</b></span>
+    <span>状态 <b id="m-status" style="color:#8fc98f">● 在线</b></span>
+  </div>
+</header>
+
+<div id="wm"></div>
+<div class="grid" id="grid"><div id="loading">作 品 加 载 中 …</div></div>
+
+<div id="lb">
+  <button class="lb-close" onclick="closeLB()">✕</button>
+  <img id="lb-img" alt="">
+  <div class="lb-cap" id="lb-cap"></div>
+</div>
+
+<div id="kick">
+  <div class="box">
+    <div class="icon">⛔</div>
+    <h2 id="kick-title">访问已终止</h2>
+    <p id="kick-msg">您的访问权限已失效</p>
+    <p style="margin-top:24px"><a href="/">返回验证页 →</a></p>
+  </div>
+</div>
+
+<script>
+const token = sessionStorage.getItem('pv_token');
+const keyText = sessionStorage.getItem('pv_key') || '';
+if (!token) location.replace('/');
+
+const REASONS = {
+  banned:    ['卡密已被封禁', '该卡密已被管理员封禁，如有疑问请联系作品提供方。'],
+  expired:   ['卡密已过期', '该卡密已超过有效期限，无法继续浏览。'],
+  exhausted: ['使用次数已用完', '该卡密的可使用次数已耗尽。'],
+  invalid:   ['会话已失效', '您的浏览会话已失效，请重新验证卡密。'],
+};
+
+/* ---------- 水印 ---------- */
+(function watermark() {
+  const wm = document.getElementById('wm');
+  const text = `${keyText} · 限时预览 · 禁止外传`;
+  for (let i = 0; i < 24; i++) {
+    const s = document.createElement('span');
+    s.textContent = text;
+    wm.appendChild(s);
+  }
+})();
+
+/* ---------- 被踢出 ---------- */
+let kicked = false;
+function kick(reason) {
+  if (kicked) return;
+  kicked = true;
+  clearInterval(hbTimer);
+  const [title, msg] = REASONS[reason] || REASONS.invalid;
+  document.getElementById('kick-title').textContent = title;
+  document.getElementById('kick-msg').textContent = msg;
+  document.getElementById('kick').classList.add('open');
+  document.getElementById('m-status').textContent = '● 已断开';
+  document.getElementById('m-status').style.color = '#e07a6a';
+  sessionStorage.removeItem('pv_token');
+  // 释放已加载的图片
+  document.querySelectorAll('img').forEach((im) => { if (im.src.startsWith('blob:')) URL.revokeObjectURL(im.src); im.src = ''; });
+}
+
+/* ---------- 心跳: 每 5 秒确认权限 ---------- */
+async function heartbeat() {
+  try {
+    const r = await fetch('/api/heartbeat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) return kick(d.reason);
+    updateMeta(d.key);
+  } catch { /* 网络抖动不踢人, 下次心跳再试 */ }
+}
+const hbTimer = setInterval(heartbeat, 5000);
+
+function updateMeta(k) {
+  document.getElementById('m-key').textContent = k.text || keyText;
+  const expEl = document.getElementById('m-exp');
+  if (k.expires_at) {
+    const left = new Date(k.expires_at) - Date.now();
+    expEl.textContent = left > 0 ? fmtLeft(left) : '已过期';
+    expEl.className = left < 3600_000 ? 'warn' : '';
+  } else {
+    expEl.textContent = '永久有效';
+  }
+}
+function fmtLeft(ms) {
+  const d = Math.floor(ms / 86400_000), h = Math.floor(ms / 3600_000) % 24, m = Math.floor(ms / 60_000) % 60;
+  return d > 0 ? `剩 ${d} 天 ${h} 时` : h > 0 ? `剩 ${h} 时 ${m} 分` : `剩 ${m} 分钟`;
+}
+
+/* ---------- 加载作品(经鉴权接口取 blob, 不暴露直链) ---------- */
+async function loadPhoto(id) {
+  const r = await fetch(`/api/photo/${id}`, { headers: { 'X-Session': token } });
+  if (!r.ok) { const d = await r.json().catch(() => ({})); kick(d.reason); throw new Error('forbidden'); }
+  return URL.createObjectURL(await r.blob());
+}
+
+async function init() {
+  document.getElementById('m-key').textContent = keyText;
+  const r = await fetch('/api/photos', { headers: { 'X-Session': token } });
+  const d = await r.json();
+  if (!r.ok) return kick(d.reason);
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (const [i, p] of d.photos.entries()) {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.style.animationDelay = `${i * 0.06}s`;
+    const img = document.createElement('img');
+    img.alt = p.title; img.draggable = false;
+    img.src = await loadPhoto(p.id);
+    const cap = document.createElement('div');
+    cap.className = 'cap'; cap.textContent = p.title;
+    div.append(img, cap);
+    div.onclick = () => openLB(img.src, p.title);
+    grid.appendChild(div);
+  }
+  heartbeat(); // 立即同步一次状态
+}
+
+/* ---------- 灯箱 ---------- */
+function openLB(src, title) {
+  document.getElementById('lb-img').src = src;
+  document.getElementById('lb-cap').textContent = title;
+  document.getElementById('lb').classList.add('open');
+}
+function closeLB() { document.getElementById('lb').classList.remove('open'); }
+document.getElementById('lb').addEventListener('click', (e) => { if (e.target.id === 'lb') closeLB(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLB(); });
+
+/* 基础防扩散: 禁用右键菜单 */
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0c2a"/><stop offset="0.6" stop-color="#252a5e"/><stop offset="1" stop-color="#5e60ce"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#64dfdf" stop-opacity="0.9"/><stop offset="1" stop-color="#64dfdf" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#sky)"/>
+  
+  <circle cx="260" cy="420" r="160" fill="url(#glow)"/>
+  <circle cx="260" cy="420" r="46" fill="#64dfdf"/>
+  <path d="M0 720 L200 535 L380 650 L560 570 L800 600 V1000 H0 Z" fill="#0b0c2a" opacity="0.85"/>
+  <path d="M0 710 L260 660 L520 710 L800 690 V1000 H0 Z" fill="#0b0c2a" opacity="0.6"/>
+  <rect y="820" width="800" height="180" fill="#0b0c2a" opacity="0.9"/>
+  <text x="60" y="920" font-family="Georgia, serif" font-size="44" fill="#64dfdf" opacity="0.9">城市夜色</text>
+  <text x="60" y="960" font-family="Georgia, serif" font-size="18" fill="#5e60ce" opacity="0.7">SERIES No.06 · 2026</text>
+</svg>
